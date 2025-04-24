@@ -1,2 +1,37 @@
-# PAPER_Dormancy_reactivation_phytohormone_mesocosm_Bandopadhyay2025
-#### This repository contains the R code used to analyze and visualize the dynamics pertaining to the active bacterial community from a lab incubation study designed to understand the dormancy reactivation dynamics of root asssociated soil bacteria in response to plant stress signals. We added stress-associated plant hormones abscisic acid (ABA) and Salicylic acid (SA) to mesocosms containing root-zone soil from common bean and switchgrass crops and tracked the active bacterial community dyanamics from a dormant to an active state over 24 h, 7 days and 14 days. 
+## Github Repository for
+# Activation dynamics and assembly of root zone soil bacterial communities in response to stress-associated phytohormones 
+## by Sreejata Bandopadhyay, Oishi Bagchi, and Ashley Shade
+<i>This work is deposited as a preprint.</i>
+
+
+### Data
+Both the raw read data and metagenome assemblies for this study are available through NCBI under bioproject [PRJNA932434](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA932434/)
+
+### To cite this work or code
+
+Bandopadhyay S, O Bagchi, and A Shade. 2025. Activation dynamics and assembly of root zone soil bacterial communities in response to stress-associated phytohormones. bioRXiv [doi 10.1101/2025.04.23.650272](https://doi.org/10.1101/2025.04.23.650272)   
+
+### Abstract
+
+Plants can “cry for help” to recruit supportive microbiome members during stressful conditions. We evaluated the activation dynamics of root zone soil bacteria in response to phytohormones produced when plants are stressed, hypothesizing that the activated taxa support plant resilience. We conducted a 2-week laboratory experiment using mesocosms of root zone soil collected from two different crops: the annual legume common bean (Phaseolus vulgaris L.) and the perennial grass switchgrass (Panicum virgatum). We inactivated the microbiome by drying and then treated the soils with either abscisic acid, salicylic acid, a carrier control (methanol), or water, and then quantified the reactivation dynamics of bacterial populations over time, at one, 7, and 14 days after phytohormone addition, using amplicon sequencing of 16S rRNA and rDNA. There were several Actinobacterial taxa that switched from an average population-inactive to a population-active state after exposure to abscisic acid and salicylic acid, with Microbispora lineages switching especially noted. Some taxa were activated only in one crop’s soil, and some were activated in both crops’ soils in response to the same phytohormone. This work suggests that different bacteria have different specificities to phytohormones as plant stress signals and provides insights into understanding the mechanisms by which stressed plants may “cry for help” to recruit bacteria from the root zone to the rhizosphere.
+
+### Contents
+
+Code is split up into two directories: [Sequence_processing](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Sequence_processing) and [Analysis](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Analysis).
+
+#### Sequence processing
+Code used for sequence processing including viral sequence filtering, vOTU clustering, taxonomy assignment, and annotation can be found under [Sequence_processing](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Sequence_processing). Scripts were run using SLURM on the MSU HPCC using slurm batch files with suffix .sb and are numbered by their order in the processing workflow. Outputs such as logs, warnings, or errors if any, are designated by the suffix .out and named in accordence with the library, run number, and slurm batch file. 
+
+#### Analysis
+Formal analysis can be found under [Analysis](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Analysis). All analysis was run with R and code was run in Rmarkdown. In the analysis directory you'll find the raw Rmarkdown files (.Rmd), a github friendly markdown rendering (.md) and the associated figure files from the rendering in separate sub-directories. The analysis was broken down into multiple chunks in separate Rmarkdown files:
+
+*  [Main viral analysis](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Analysis/Main_viral_analysis.md): The majority of the viral analysis included in the manuscript.
+*  [Viral vs. Bacterial analysis](https://github.com/ShadeLab/Centralia_phages_Barnett/tree/main/Analysis/Viral_vs_bacterial.md): Compairing the viral community to the bacterial community (Mantel test and Procrustes analysis mainly).
+
+### Funding
+Support for this research was provided by the [United States National Science Foundation under Grant No. MCB #1817377](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1817377&HistoricalAwards=false) to A.S. Additional support was provided by the [Great Lakes Bioenergy Research Center](https://www.glbrc.org/), U.S. Department of Energy, Office of Science, Office of Biological and Environmental Research under Award Number DE-SC0018409 and by the National Science Foundation Long-Term Ecological Research Program (DEB #1832042). Additional support was provided by the Michigan State University Plant Resilience Institute by, the USDA National Institute of Food and Agriculture and Michigan State University AgBioResearch. AS acknowledges project support from the European Union (ERC, [MicroRescue, 101087042](https://cordis.europa.eu/project/id/101087042). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council. Neither the European Union nor the granting authority can be held responsible for them.
+
+### More info
+[ShadeLab](http://ashley17061.wixsite.com/shadelab/home)
+[Ecologie Microbienne Lyon](https://www.ecologiemicrobiennelyon.fr/)
+
