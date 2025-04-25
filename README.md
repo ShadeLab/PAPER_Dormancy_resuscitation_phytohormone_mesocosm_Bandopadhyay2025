@@ -17,13 +17,13 @@ Plants can “cry for help” to recruit supportive microbiome members during st
 
 ### Contents
 
-Code is split up into two directories: [Sequence_processing](INSERT LINK) and [Analysis](https://github.com/ShadeLab/PAPER_Dormancy_resuscitation_phytohormone_mesocosm_Bandopadhyay2025/tree/main/R_analysis_phytohormoneResusc_cleaned_Final.R).
+Code is split up into two directories: [Sequence_processing](https://github.com/ShadeLab/PAPER_Dormancy_resuscitation_phytohormone_mesocosm_Bandopadhyay2025/tree/main/Sequence_processing/dna_cdna_analysis_qiime2_final.txt) and [Analysis](https://github.com/ShadeLab/PAPER_Dormancy_resuscitation_phytohormone_mesocosm_Bandopadhyay2025/tree/main/Analysis/R_analysis_phytohormoneResusc_cleaned_Final.R).
 
 #### Sequence processing
-
+Code used for sequence processing in QIIME2 including denoising, clustering, and taxonomy assignment can be found under [Sequence_processing](https://github.com/ShadeLab/PAPER_Dormancy_resuscitation_phytohormone_mesocosm_Bandopadhyay2025/tree/main/Sequence_processing/dna_cdna_analysis_qiime2_final.txt). Script was run using the MSU HPCC. Output files such as OTU table and taxonomy files were imported in R for subsequent analysis.
 
 #### Analysis
-
+Formal analysis can be found under [Analysis](https://github.com/ShadeLab/PAPER_Dormancy_resuscitation_phytohormone_mesocosm_Bandopadhyay2025/tree/main/Analysis/R_analysis_phytohormoneResusc_cleaned_Final.R). All analysis was run in R version 4.1.2. The analysis directory contains the output figure files in a separate directory along with the R code. A single R file was used for all analyses. 
 
 ### Funding
 Support for this research was provided by the [United States National Science Foundation under Grant No. MCB #1817377](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1817377&HistoricalAwards=false) to A.S. Additional support was provided by the [Great Lakes Bioenergy Research Center](https://www.glbrc.org/), U.S. Department of Energy, Office of Science, Office of Biological and Environmental Research under Award Number DE-SC0018409 and by the National Science Foundation Long-Term Ecological Research Program (DEB #1832042). Additional support was provided by the Michigan State University Plant Resilience Institute by, the USDA National Institute of Food and Agriculture and Michigan State University AgBioResearch. AS acknowledges project support from the European Union (ERC, [MicroRescue, 101087042](https://cordis.europa.eu/project/id/101087042). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council. Neither the European Union nor the granting authority can be held responsible for them.
