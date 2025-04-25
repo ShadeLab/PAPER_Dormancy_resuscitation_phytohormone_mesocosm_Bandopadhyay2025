@@ -1,0 +1,362 @@
+####
+16S analysis in Qiime2: workflow in HPCC
+####
+
+
+#steps to download qiime2
+conda update conda
+wget https://data.qiime2.org/distro/core/qiime2-2021.4-py38-linux-conda.yml
+conda env create -n qiime2-2021.4 --file qiime2-2021.4-py38-linux-conda.yml ##creates an environment called qiime2-2021.4
+conda info --envs ##check conda envs
+conda activate qiime2-2021.4 ##activate conda env
+
+##need to change python to 3.8 version to make qiime2 work, so download the newer version supporting py v. 3.8
+
+conda update conda
+
+wget https://data.qiime2.org/distro/core/qiime2-2022.2-py38-linux-conda.yml
+conda env create -n qiime2-2022.2 --file qiime2-2022.2-py38-linux-conda.yml
+# OPTIONAL CLEANUP
+rm qiime2-2022.2-py38-linux-conda.yml
+
+conda activate qiime2-2022.2
+
+##split data to DNA analysis and cDNA analysis folder to carry these analyses separately for DNA and cDNA
+
+
+#count the correct file numbers in the specific cDNA analysis or DNA analysis folder using
+ls | wc -l
+
+#for subsequent steps navigate to folder called DNA_analysis or cDNA_analysis
+
+#change .gz files to .fastq files 
+gunzip *.gz
+
+#make manifest file, since mothur can do this step easily using the make.file command we will use mothur for this step
+
+
+#do the following within the DNA_analysis or cDNA_analysis folder. Make sure that modules are loaded or reload the modules #as needed
+
+
+#to download mothur follow these steps in HPCC
+module spider mothur
+module spider Mothur/1.44.3-Python-3.7.2
+module purge
+module load GCC/8.2.0-2.31.1  OpenMPI/3.1.3
+module load Mothur/1.44.3-Python-3.7.2
+mothur ##will open mothur on HPCC, use quit() to go back to bash
+
+make.file(inputdir=., type=fastq, prefix=stability)
+
+#output: 
+#Setting input directory to: /mnt/research/ShadeLab/WorkingSpace/Bandopadhyay_WorkingSpace/Switchgrass_Bean_Phytohormone_Resuscitation/bean_sw_rna/
+
+#Output File Names: 
+#/mnt/research/ShadeLab/WorkingSpace/Bandopadhyay_WorkingSpace/Switchgrass_Bean_Phytohormone_Resuscitation/bean_sw_rna/stability.files
+#stability.files can be opened in excel and the header changed to match what is needed for manifest file to be used 
+#with qiime2. 
+
+#quit mothur, this brings us back to bash 
+
+quit() 
+
+
+##open stability.files in excel and change header to sample-id, forward-absolute-filepath and reverse-absolute-filepath
+##change path to absolute path
+## save as .txt file called manifest_file.txt
+
+##quality control with fastQC. this code will store all Fastqc reports in zip file and also export as the usual html ##file. Individually exported for each forward and reverse file.
+
+module spider Fastqc
+module load FastQC/0.11.7-Java-1.8.0_162
+fastqc *.fastq
+
+conda activate qiime2-2022.2
+
+qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path manifest_file.txt --output-path paired-end-demux.qza --input-format PairedEndFastqManifestPhred33V2
+
+##output says : Imported manifest_file.txt as PairedEndFastqManifestPhred33V2 to paired-end-demux.qza
+
+##All of the sequence data is stored compressed in the file paired-end-demux.qza. If we wish, we may create a ##visualization file from it with the following command:
+
+qiime demux summarize --i-data paired-end-demux.qza --o-visualization demux.qzv
+##Saved Visualization to: demux.qzv
+	
+
+##next step is to denoise using DADA2 or deblur plugin. There are two options to optimize merging of the forward and ##reverse reads. This is done by removing as much of the lower quality portions of the reads as possible and still leave ##enough overlap. We can do this by 1. inspection of the quality plots which is subjective, or 2. use Zymo Research’s ##program FIGARO to find the parameters for me. See John Quensen's tutorial on FIGARO for how to install and run Figaro ##here http://john-quensen.com/tutorials/figaro/. 
+
+
+##Figaro 
+
+Create figaro environment (don't create again if already there)
+
+wget http://john-quensen.com/wp-content/uploads/2020/03/figaro.yml
+conda env create -n figaro -f figaro.yml
+
+
+Next, download and install FIGARO by running the following commands from the current directory:
+wget https://github.com/Zymo-Research/figaro/archive/master.zip
+unzip master.zip
+rm master.zip
+mv figaro-master figaro
+cd figaro/figaro
+
+
+# Test FIGARO installation
+# Activate the FIGARO environment
+conda activate figaro
+
+ 
+# Rename the files in Zymo format, for example
+mv forward.fastq sam1_16s_R1.fastq
+mv reverse.fastq sam1_16s_R2.fastq
+
+#when renaming multiple fastq files make use of the stability files to rename in excel first: move all fastq files to a #new folder, then make a batch file to rename all fastq files to Zymo convention. First within the manifest file/#stability file rename 'DNA_' with sam, then rename _S**_L***_ with _16s_ in excel. Then create .sb file as per rules of #batch file to rename all fastq files at once. See example batch script.
+#and then use dos2unix <submission_script> to change to unix if needed. submit the batch file, rename will be 
+#successful for all fastq files in specified folder. Then run Figaro using samples in folder.
+
+#Even easier way, create a column with sam1, sam2 etc. create another columnn with _16s_R1 and _16s_R2. Then use "&" to merge the cells, then paste into new column "as values". Then find _R1 and _R2 to change to _R1.fastq and _R2.fastq. unless pasted as values the find replace option will not work.
+
+
+# Run FIGARO
+# cd to installation folder
+cd /figaro/figaro
+
+##we can add minimum overlap as -m 30
+
+python figaro.py -i /mnt/research/ShadeLab/WorkingSpace/Bandopadhyay_WorkingSpace/Switchgrass_Bean_Phytohormone_Resuscitation/bean_sw_rna/test_figaro -o /mnt/research/ShadeLab/WorkingSpace/Bandopadhyay_WorkingSpace/Switchgrass_Bean_Phytohormone_Resuscitation/bean_sw_rna/test_figaro -f 1 -r 1 -a 253 -m 30 -F zymo
+
+##truncation parameters will be displayed 
+
+##DNA
+
+conda deactivate ##deactivates figaro
+
+[
+    {
+        "trimPosition": [
+            123,
+            162
+        ],
+        "maxExpectedError": [
+            1,
+            2
+        ],
+        "readRetentionPercent": 93.5,
+        "score": 92.49574024018887
+    },
+    {
+
+Overlap: 35 bp when min overlap set to 30
+
+##The recommended forward truncation position is 123 and the recommended reverse truncation position is 162. After ##truncation, the expected number of errors in the forward read is 1 and the expected number of errors in the reverse ##read is 2. Using these truncation parameters with the QIIME2 DADA2 plug-in should result in merging 93.5% of the ##reads.
+
+#RNA
+
+    {
+        "trimPosition": [
+            114,
+            171
+        ],
+        "maxExpectedError": [
+            1,
+            2
+        ],
+        "readRetentionPercent": 94.34,
+        "score": 93.3447688536476
+    },
+
+Overlap: 35 bp when min overlap set to 30
+
+##The recommended forward truncation position is 114 and the recommended reverse truncation position is 171. After ##truncation, the expected number of errors in the forward read is 1 and the expected number of errors in the reverse ##read is 2. Using these truncation parameters with the QIIME2 DADA2 plug-in should result in merging 94.34% of the ##reads.
+
+
+
+
+
+##use dada2 Denise paired to Denoise, dereplicate PE sequences, filter chimeras and merge reads to ASVs (default)
+
+qiime dada2 denoise-paired --i-demultiplexed-seqs paired-end-demux.qza --p-trunc-len-f 123 --p-trunc-len-r 162 --o-table table.qza --o-representative-sequences rep-seqs.qza --o-denoising-stats denoising-stats.qza
+
+##important: always truncate at 3' end so that when OTU tables from different runs with different truncation parameters ##are merged later there is no issue. See this blog for detailed demo. https://forum.qiime2.org/t/denoising-on-multiple-##runs-to-be-combined-down-stream/14548 
+
+##If the code fails better to run a batch script that included more time on the Job. See qiime2-dada2denoise.sb
+
+##this worked and exported the required files
+
+##visualize the output using the codes below
+qiime metadata tabulate \
+  --m-input-file denoising-stats.qza \
+  --o-visualization denoising-stats.qzv
+
+qiime feature-table summarize \
+  --i-table table.qza \
+  --o-visualization table.qzv \
+  --m-sample-metadata-file sample-metadata-rna.txt
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+##exported the required file formats in tsv or pdf and checked them using qiime2View
+
+##assign taxonomy, I made a classify-silva-taxonomy.sb file with the code below and submitted the job using sbatch command
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier silva-138-99-515-806-nb-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+
+##the job worked and the file taxonomy.qza was exported
+
+##next output taxonomy.qza as qzv file to view
+
+qiime metadata tabulate \
+  --m-input-file taxonomy.qza \
+  --o-visualization taxonomy.qzv
+
+
+#Export OTU table
+qiime tools export \
+  --input-path table.qza \
+  --output-path phyloseq
+
+##Exported table.qza as BIOMV210DirFmt to directory phyloseq (no need to create a phyloseq directory for this step. The ##directory will be created when running the command).
+
+# OTU tables exports as feature-table.biom so convert to .tsv
+# - Change -i and -o paths accordingly
+biom convert \
+  -i phyloseq/feature-table.biom \
+  -o phyloseq/otu_table.txt \
+  --to-tsv
+
+
+# Manually change #OTUID to OTUID in otu_table.txt
+
+# Export taxonomy table
+qiime tools export \
+  --input-path taxonomy.qza \
+  --output-path phyloseq
+
+#Exported taxonomy.qza as TSVTaxonomyDirectoryFormat to directory phyloseq
+
+
+#manually change Feature ID to OTUID in taxonomy.tsv. change taxonomy and OTU tables to csv format.
+
+##these files are now ready to export to R and run using phyloseq
+
+
+##after denoising, merge multiple tables and sequences and use clustering approach to get a combined dn-99% similarity table and rep-seqs
+
+qiime feature-table merge \
+ --i-tables dna-table.qza \
+ --i-tables cdna-table.qza \
+ --o-merged-table merged-table.qza \ 
+ --p-overlap-method sum
+#the overlap sum method combined reads from duplicate samples in both tables, best to have all unique samples
+
+qiime feature-table merge-seqs \
+ --i-data dna-rep-seqs.qza \
+ --i-data cdna-rep-seqs.qza \
+ --o-merged-data merged-rep-seqs.qza
+
+
+De novo clustering:
+De novo clustering of a feature table can be performed as follows. In this example, clustering is performed at 99% identity to create 99% OTUs.
+
+qiime vsearch cluster-features-de-novo \
+  --i-table merged-table.qza \
+  --i-sequences merged-rep-seqs.qza \
+  --p-perc-identity 0.99 \
+  --o-clustered-table table-dn-99.qza \
+  --o-clustered-sequences rep-seqs-dn-99.qza
+
+
+Output artifacts:
+
+table-dn-99.qza
+rep-seqs-dn-99.qza
+
+##after this repeat the code above after denoising step to assign taxonomy and get final OTU table and taxonomy table
+
+
+
+####open reference clustering was finally used for the manuscript where reference sequences were obtained from the drought paper https://www.nature.com/articles/s41467-024-50463-1 , whatever did not cluster was clustered de novo
+
+qiime vsearch cluster-features-open-reference \
+  --i-table merged-table.qza \
+  --i-sequences merged-rep-seqs.qza \
+  --i-reference-sequences drought-rep-seqs-dn-99.qza \
+  --p-perc-identity 0.99 \
+  --o-clustered-table table-or-99.qza \
+  --o-clustered-sequences rep-seqs-or-99.qza \
+  --o-new-reference-sequences new-ref-seqs-or-99.qza
+
+##Saved FeatureTable[Frequency] to: table-or-99.qza
+##Saved FeatureData[Sequence] to: rep-seqs-or-99.qza #used these sequences
+##Saved FeatureData[Sequence] to: new-ref-seqs-or-99.qza #did not use this
+
+
+**merged sample metadata for dna and rna dataset, exported to qzv to visualize output
+
+qiime feature-table summarize \
+  --i-table table-or-99.qza \
+  --o-visualization table-or-99.qzv \
+  --m-sample-metadata-file merge-sample-metadata.txt
+
+
+#Export OTU table
+qiime tools export \
+  --input-path table-or-99.qza \
+  --output-path phyloseq
+
+##Exported table-or-99.qza as BIOMV210DirFmt to directory phyloseq (no need to create a phyloseq directory for this step. The directory will be created when running the command.
+
+# OTU tables exports as feature-table.biom so convert to .tsv
+# - Change -i and -o paths accordingly
+biom convert \
+  -i phyloseq/feature-table.biom \
+  -o phyloseq/otu_table_or_99.txt \
+  --to-tsv
+
+
+# Manually change #OTUID to OTUID in otu_table_or_99.txt
+
+###redo for clustered sequences
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs-or-99.qza \
+  --o-visualization rep-seqs-or-99.qzv
+
+##exported the required files in tsv or pdf and checked them 
+
+##assign taxonomy
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier silva-138-99-515-806-nb-classifier.qza \
+  --i-reads rep-seqs-or-99.qza \
+  --o-classification taxonomy-rep-seqs-or-99.qza
+
+##for the above code, I made a classify-silva-taxonomy.sb file and submitted the job
+##the job worked and the file taxonomy-rep-seqs-or-99.qza was exported
+
+##next output taxonomy as qzv file
+
+qiime metadata tabulate \
+  --m-input-file taxonomy-rep-seqs-or-99.qza \
+  --o-visualization taxonomy-rep-seqs-or-99.qzv
+
+# Export taxonomy table
+qiime tools export \
+  --input-path taxonomy-rep-seqs-or-99.qza \
+  --output-path phyloseq_repseqs
+
+#Exported taxonomy-rep-seqs-or-99.qza as TSVTaxonomyDirectoryFormat to directory phyloseq
+
+##rename taxonomy.tsv to taxonomy-rep-seqs-or-99.tsv
+#manually change Feature ID to OTUID in taxonomy-rep-seqs-or-99.tsv
+
+
+
+
